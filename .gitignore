@@ -1,0 +1,22 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.env
+data/
+artifacts/
+mlruns/
+mlflow.db
+wandb/
+*.pt
+*.pth
+!reports/**
+.pytest_cache/
+.ruff_cache/
+.coverage
+# terraform
+infra/terraform/.terraform/
+infra/terraform/*.tfstate*
+infra/terraform/.terraform.lock.hcl
+infra/terraform/tfplan
+.DS_Store

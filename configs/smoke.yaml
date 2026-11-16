@@ -1,0 +1,7 @@
+# Tiny synthetic run used by CI: exercises the whole pipeline in seconds, no downloads.
+run_name: smoke
+output_dir: artifacts
+data: {dataset: fake, img_size: 64, num_workers: 0, fake_size: 48}
+model: {name: scratch_cnn, pretrained: false}
+train: {epochs: 2, batch_size: 16, warmup_epochs: 1, max_steps_per_epoch: 3, amp: false}
+tracking: {mlflow: false, wandb: false}

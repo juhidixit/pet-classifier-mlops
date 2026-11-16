@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install ruff==0.8.4
+      - run: ruff check .
+      - run: ruff format --check .
+
+  test:
+    runs-on: ubuntu-latest
+    needs: lint
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - name: Install CPU-only torch
+        run: pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+      - name: Install package
+        run: pip install -e ".[serve,dev]"
+      - name: Unit + integration tests
+        run: pytest --cov=petcls --cov-report=term-missing --cov-report=xml
+      - name: End-to-end smoke run (synthetic data)
+        run: python -m petcls.train --config configs/smoke.yaml
+      - if: matrix.python-version == '3.12'
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-checkpoint
+          path: artifacts/smoke/model.pt
+          retention-days: 3
+
+  docker:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: smoke-checkpoint
+          path: artifacts
+      - name: Build inference image (smoke checkpoint stands in for the real model)
+        run: docker build -t pet-classifier:ci .
+      - name: Container serves /health and /predict
+        run: |
+          docker run -d --name api -p 8000:8000 pet-classifier:ci
+          for i in $(seq 1 30); do curl -sf localhost:8000/health && break; sleep 2; done
+          python3 -c "from PIL import Image; Image.new('RGB',(200,150),(120,80,40)).save('pet.jpg')" \
+            || (pip install pillow && python3 -c "from PIL import Image; Image.new('RGB',(200,150),(120,80,40)).save('pet.jpg')")
+          curl -sf -F "file=@pet.jpg" "localhost:8000/predict?k=3" | tee out.json
+          grep -q top_k out.json
+          docker logs api
+
+  terraform:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infra/terraform
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.8
+      - run: terraform fmt -check -recursive
+      - run: terraform init -backend=false
+      - run: terraform validate

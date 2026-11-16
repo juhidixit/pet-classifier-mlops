@@ -1,0 +1,23 @@
+# Weights & Biases Bayesian sweep over the ResNet-50 fine-tuning recipe.
+#   wandb sweep configs/sweep.yaml   ->   wandb agent <entity>/<project>/<sweep_id> --count 20
+program: src/petcls/train.py
+method: bayes
+metric: {name: val_acc, goal: maximize}
+early_terminate: {type: hyperband, min_iter: 3}
+parameters:
+  train.lr: {distribution: log_uniform_values, min: 1.0e-4, max: 3.0e-3}
+  train.backbone_lr_mult: {values: [0.03, 0.1, 0.3]}
+  train.weight_decay: {distribution: log_uniform_values, min: 1.0e-5, max: 1.0e-3}
+  train.label_smoothing: {values: [0.0, 0.1, 0.2]}
+  model.dropout: {values: [0.0, 0.2, 0.4]}
+  train.batch_size: {values: [32, 64]}
+command:
+  - ${env}
+  - python
+  - -m
+  - petcls.train
+  - --config
+  - configs/resnet50.yaml
+  - tracking.wandb=true
+  - train.epochs=8
+  - ${args_no_hyphens}

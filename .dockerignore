@@ -1,0 +1,12 @@
+.git
+data
+mlruns
+wandb
+reports
+tests
+infra
+.github
+*.md
+!README.md
+artifacts/*
+!artifacts/model.pt
