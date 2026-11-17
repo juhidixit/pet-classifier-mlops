@@ -25,6 +25,6 @@ train:
   seed: 42
 tracking:
   mlflow: true
-  mlflow_uri: file:./mlruns
+  mlflow_uri: sqlite:///mlflow.db
   wandb: false
   experiment: oxford-pets

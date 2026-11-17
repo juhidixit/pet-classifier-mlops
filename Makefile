@@ -33,7 +33,7 @@ compare:            ## results table + learning curves for the README
 train-all: train-resnet train-scratch evaluate compare
 
 mlflow-ui:
-	mlflow ui --backend-store-uri ./mlruns --port 5000
+	mlflow ui --backend-store-uri sqlite:///mlflow.db --port 5000
 
 sweep:              ## requires `wandb login`
 	wandb sweep configs/sweep.yaml

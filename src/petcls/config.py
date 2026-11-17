@@ -47,7 +47,7 @@ class TrainConfig:
 @dataclass
 class TrackingConfig:
     mlflow: bool = True
-    mlflow_uri: str = "file:./mlruns"
+    mlflow_uri: str = "sqlite:///mlflow.db"
     wandb: bool = False
     wandb_project: str = "pet-classifier-mlops"
     experiment: str = "oxford-pets"
