@@ -1,0 +1,11 @@
+{
+  "run_name": "resnet50",
+  "model": "resnet50",
+  "best_val_acc": 0.9619565217391305,
+  "best_epoch": 7,
+  "epochs_run": 11,
+  "train_time_s": 9522.695749998093,
+  "device": "mps",
+  "params": 23583845,
+  "checkpoint": "artifacts/resnet50/model.pt"
+}

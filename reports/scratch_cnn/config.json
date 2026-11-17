@@ -1,0 +1,38 @@
+{
+  "run_name": "scratch_cnn",
+  "output_dir": "artifacts",
+  "data": {
+    "root": "data",
+    "dataset": "oxford_pets",
+    "img_size": 160,
+    "val_fraction": 0.1,
+    "num_workers": 4,
+    "fake_size": 64
+  },
+  "model": {
+    "name": "scratch_cnn",
+    "pretrained": false,
+    "dropout": 0.3
+  },
+  "train": {
+    "epochs": 40,
+    "batch_size": 64,
+    "lr": 0.002,
+    "backbone_lr_mult": 0.1,
+    "weight_decay": 0.0005,
+    "label_smoothing": 0.1,
+    "warmup_epochs": 2,
+    "freeze_backbone_epochs": 0,
+    "patience": 10,
+    "max_steps_per_epoch": null,
+    "amp": true,
+    "seed": 42
+  },
+  "tracking": {
+    "mlflow": true,
+    "mlflow_uri": "file:./mlruns",
+    "wandb": false,
+    "wandb_project": "pet-classifier-mlops",
+    "experiment": "oxford-pets"
+  }
+}

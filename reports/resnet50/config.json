@@ -1,0 +1,38 @@
+{
+  "run_name": "resnet50",
+  "output_dir": "artifacts",
+  "data": {
+    "root": "data",
+    "dataset": "oxford_pets",
+    "img_size": 224,
+    "val_fraction": 0.1,
+    "num_workers": 4,
+    "fake_size": 64
+  },
+  "model": {
+    "name": "resnet50",
+    "pretrained": true,
+    "dropout": 0.2
+  },
+  "train": {
+    "epochs": 12,
+    "batch_size": 32,
+    "lr": 0.001,
+    "backbone_lr_mult": 0.1,
+    "weight_decay": 0.0001,
+    "label_smoothing": 0.1,
+    "warmup_epochs": 1,
+    "freeze_backbone_epochs": 1,
+    "patience": 4,
+    "max_steps_per_epoch": null,
+    "amp": true,
+    "seed": 42
+  },
+  "tracking": {
+    "mlflow": true,
+    "mlflow_uri": "file:./mlruns",
+    "wandb": false,
+    "wandb_project": "pet-classifier-mlops",
+    "experiment": "oxford-pets"
+  }
+}
