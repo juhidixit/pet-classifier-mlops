@@ -23,7 +23,7 @@ class DataConfig:
 
 @dataclass
 class ModelConfig:
-    name: str = "resnet50"  # "resnet50" | "scratch_cnn"
+    name: str = "resnet50"  # "resnet50" | "resnet18_scratch" | "scratch_cnn"
     pretrained: bool = True
     dropout: float = 0.2
 

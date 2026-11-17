@@ -71,3 +71,38 @@ def summarize(probs: np.ndarray, y: np.ndarray, class_names: list[str]) -> dict:
         "most_confused_pairs": most_confused_pairs(cm, class_names),
         "confusion_matrix": cm.tolist(),
     }
+
+
+def bootstrap_ci(
+    probs: np.ndarray, y: np.ndarray, n_boot: int = 1000, seed: int = 0, alpha: float = 0.05
+) -> dict:
+    """Percentile bootstrap CI for top-1 accuracy (resampling test images)."""
+    rng = np.random.default_rng(seed)
+    correct = (probs.argmax(1) == y).astype(float)
+    accs = np.array([correct[rng.integers(0, len(y), len(y))].mean() for _ in range(n_boot)])
+    lo, hi = np.quantile(accs, [alpha / 2, 1 - alpha / 2])
+    return {"top1_ci_low": float(lo), "top1_ci_high": float(hi), "n_boot": n_boot}
+
+
+def fit_temperature(log_probs: np.ndarray, y: np.ndarray) -> float:
+    """Temperature scaling (Guo et al., 2017): fit one scalar T on held-out *validation* data.
+
+    softmax(log p / T) equals softmax(logits / T), so log-probabilities can stand in for logits.
+    """
+    grid = np.exp(np.linspace(np.log(0.25), np.log(8.0), 400))
+    best_t, best_nll = 1.0, np.inf
+    for t in grid:
+        z = log_probs / t
+        z = z - z.max(1, keepdims=True)
+        lse = np.log(np.exp(z).sum(1))
+        nll = float(np.mean(lse - z[np.arange(len(y)), y]))
+        if nll < best_nll:
+            best_t, best_nll = float(t), nll
+    return best_t
+
+
+def apply_temperature(probs: np.ndarray, t: float) -> np.ndarray:
+    z = np.log(np.clip(probs, 1e-12, 1)) / t
+    z = z - z.max(1, keepdims=True)
+    e = np.exp(z)
+    return e / e.sum(1, keepdims=True)

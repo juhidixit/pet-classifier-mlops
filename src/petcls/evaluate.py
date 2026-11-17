@@ -23,7 +23,14 @@ from .config import DataConfig  # noqa: E402
 from .data import build_datasets, denormalize, make_loader, species_of  # noqa: E402
 from .engine import predict_loader, select_device  # noqa: E402
 from .gradcam import GradCAM, overlay  # noqa: E402
-from .metrics import reliability_curve, summarize  # noqa: E402
+from .metrics import (
+    apply_temperature,
+    bootstrap_ci,
+    expected_calibration_error,
+    fit_temperature,
+    reliability_curve,
+    summarize,
+)  # noqa: E402
 from .models import gradcam_target_layer, load_checkpoint  # noqa: E402
 
 log = logging.getLogger("petcls.evaluate")
@@ -143,14 +150,27 @@ def evaluate(
         num_workers=num_workers,
         fake_size=fake_size,
     )
-    test = build_datasets(dcfg).test
+    bundle = build_datasets(dcfg)
+    test = bundle.test
     probs, y = predict_loader(
         model, make_loader(test, batch_size, False, num_workers), dev, tta=tta
     )
+    # Calibrate on the validation split only (never the test set).
+    vprobs, vy = predict_loader(
+        model, make_loader(bundle.val, batch_size, False, num_workers), dev, tta=tta
+    )
+    temperature = fit_temperature(np.log(np.clip(vprobs, 1e-12, 1)), vy)
+    cal_probs = apply_temperature(probs, temperature)
 
     out_dir = Path(out)
     out_dir.mkdir(parents=True, exist_ok=True)
     report = summarize(probs, y, names)
+    report.update(bootstrap_ci(probs, y))
+    report["calibration"] = {
+        "temperature": temperature,
+        "ece_before": report["ece"],
+        "ece_after": expected_calibration_error(cal_probs, y),
+    }
     report.update(
         {
             "model": ckpt["model_name"],

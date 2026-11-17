@@ -17,6 +17,9 @@ test:
 smoke:              ## seconds-long synthetic end-to-end run
 	$(PY) -m petcls.train --config configs/smoke.yaml
 
+train-resnet18:
+	$(PY) -m petcls.train --config configs/resnet18_scratch.yaml
+
 train-resnet:
 	$(PY) -m petcls.train --config configs/resnet50.yaml
 

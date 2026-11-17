@@ -23,8 +23,8 @@ def main() -> None:
     a = p.parse_args()
 
     rows = [
-        "| Model | Params | Test top-1 | Test top-5 | Macro-F1 | ECE | Cat/dog acc. | "
-        "Epochs | Train time |",
+        "| Run | Params | Test top-1 (95% CI) | Top-5 | Macro-F1 | ECE -> after T-scaling | "
+        "Cat/dog acc. | Epochs | Train time |",
         "|---|---|---|---|---|---|---|---|---|",
     ]
     fig, axes = plt.subplots(1, 2, figsize=(11, 4))
@@ -32,9 +32,12 @@ def main() -> None:
         summ = json.loads((Path(a.artifacts) / run / "train_summary.json").read_text())
         hist = json.loads((Path(a.artifacts) / run / "history.json").read_text())
         m = json.loads((Path(a.reports) / run / "metrics.json").read_text())
+        cal = m.get("calibration", {})
+        ci = f"[{m['top1_ci_low']:.1%}, {m['top1_ci_high']:.1%}]" if "top1_ci_low" in m else ""
+        ece = f"{m['ece']:.3f}" + (f" -> {cal['ece_after']:.3f}" if cal else "")
         rows.append(
-            f"| {run} | {summ['params'] / 1e6:.1f}M | **{m['top1_accuracy']:.1%}** | "
-            f"{m['top5_accuracy']:.1%} | {m['macro_f1']:.3f} | {m['ece']:.3f} | "
+            f"| {run} | {summ['params'] / 1e6:.1f}M | **{m['top1_accuracy']:.1%}** {ci} | "
+            f"{m['top5_accuracy']:.1%} | {m['macro_f1']:.3f} | {ece} | "
             f"{m['species']['species_accuracy']:.1%} | {summ['epochs_run']} | "
             f"{summ['train_time_s'] / 60:.0f} min ({summ['device']}) |"
         )

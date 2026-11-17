@@ -13,7 +13,7 @@ from petcls.models import (
 )
 
 
-@pytest.mark.parametrize("name", ["scratch_cnn", "resnet50"])
+@pytest.mark.parametrize("name", ["scratch_cnn", "resnet50", "resnet18_scratch"])
 def test_forward_shape(name):
     m = build_model(ModelConfig(name=name, pretrained=False), num_classes=37).eval()
     with torch.no_grad():

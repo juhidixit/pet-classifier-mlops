@@ -1,7 +1,15 @@
 import numpy as np
 import pytest
 
-from petcls.metrics import expected_calibration_error, most_confused_pairs, summarize, topk_accuracy
+from petcls.metrics import (
+    apply_temperature,
+    bootstrap_ci,
+    expected_calibration_error,
+    fit_temperature,
+    most_confused_pairs,
+    summarize,
+    topk_accuracy,
+)
 
 
 def test_topk():
@@ -31,3 +39,24 @@ def test_confused_pairs_and_summary():
     s = summarize(probs, np.array([0, 1, 2, 0]), names)
     assert s["top1_accuracy"] == 0.75
     assert s["per_class_accuracy"]["a"] == 0.5
+
+
+def test_temperature_scaling_reduces_overconfidence():
+    rng = np.random.default_rng(0)
+    n, c = 2000, 5
+    y = rng.integers(0, c, n)
+    logits = rng.normal(size=(n, c))
+    logits[np.arange(n), y] += 1.5  # modestly informative ...
+    logits *= 4.0  # ... but wildly over-confident
+    p = np.exp(logits - logits.max(1, keepdims=True))
+    p /= p.sum(1, keepdims=True)
+    t = fit_temperature(np.log(np.clip(p, 1e-12, 1)), y)
+    assert t > 1.5
+    assert expected_calibration_error(apply_temperature(p, t), y) < expected_calibration_error(p, y)
+
+
+def test_bootstrap_ci_contains_point_estimate():
+    probs = np.eye(4)[np.array([0, 1, 2, 3] * 25)]
+    y = np.array([0, 1, 2, 0] * 25)
+    ci = bootstrap_ci(probs, y, n_boot=200)
+    assert ci["top1_ci_low"] <= 0.75 <= ci["top1_ci_high"]

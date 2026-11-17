@@ -54,6 +54,11 @@ def build_model(cfg: ModelConfig, num_classes: int) -> nn.Module:
         m = models.resnet50(weights=weights)
         m.fc = nn.Sequential(nn.Dropout(cfg.dropout), nn.Linear(m.fc.in_features, num_classes))
         return m
+    if cfg.name == "resnet18_scratch":
+        # Same data pipeline, random init: a *stronger* from-scratch baseline than ScratchCNN.
+        m = models.resnet18(weights=None)
+        m.fc = nn.Sequential(nn.Dropout(cfg.dropout), nn.Linear(m.fc.in_features, num_classes))
+        return m
     if cfg.name == "scratch_cnn":
         return ScratchCNN(num_classes=num_classes, dropout=cfg.dropout)
     raise ValueError(f"Unknown model {cfg.name!r}")

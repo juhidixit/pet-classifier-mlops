@@ -1,0 +1,17 @@
+# Stronger from-scratch baseline: ResNet-18 with random init (no ImageNet weights).
+run_name: resnet18_scratch
+output_dir: artifacts
+data: {root: data, dataset: oxford_pets, img_size: 144, val_fraction: 0.1, num_workers: 2}
+model: {name: resnet18_scratch, pretrained: false, dropout: 0.3}
+train:
+  epochs: 50
+  batch_size: 64
+  lr: 2.0e-3
+  weight_decay: 5.0e-4
+  label_smoothing: 0.1
+  warmup_epochs: 3
+  freeze_backbone_epochs: 0
+  patience: 12
+  amp: true
+  seed: 42
+tracking: {mlflow: true, mlflow_uri: "sqlite:///mlflow.db", wandb: false, experiment: oxford-pets}
