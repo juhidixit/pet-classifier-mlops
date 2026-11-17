@@ -58,7 +58,7 @@ class Tracker:
     def set_summary(self, summary: dict[str, Any]) -> None:
         if self._mlflow:
             self._mlflow.log_metrics(
-                {k: v for k, v in summary.items() if isinstance(v, (int, float))}
+                {k: v for k, v in summary.items() if isinstance(v, int | float)}
             )
         if self._wandb:
             self._wandb.summary.update(summary)
